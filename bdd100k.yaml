@@ -1,0 +1,22 @@
+# BDD100K Dataset Configuration File
+# IMPORTANT: Change this path to point to your bdd100k dataset folder!
+path: ./datasets/bdd100k 
+train: 'images/100k/train'
+val: 'images/100k/val'
+
+# Tell YOLO where the labels are located relative to the dataset path
+#label: ./labels/det_20/
+
+# Class names
+names:
+  0: 'pedestrian'
+  1: 'rider'
+  2: 'car'
+  3: 'truck'
+  4: 'bus'
+  5: 'train'
+  6: 'motorcycle'
+  7: 'bicycle'
+  8: 'traffic light'
+  9: 'traffic sign'
+

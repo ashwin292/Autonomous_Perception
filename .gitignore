@@ -1,0 +1,45 @@
+# --- Build & System Files ---
+# C++ build artifacts from CMake
+/build/
+/perception_app
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# macOS system files
+.DS_Store
+
+# VS Code editor settings
+.vscode/
+
+
+# --- Python ---
+# Virtual environment folder
+/venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+
+# --- Data & Models ---
+# Large datasets folder
+/datasets
+/bdd100k
+
+# Large video and compressed files
+*.mov
+*.zip
+
+# YOLO training runs, logs, and results
+/runs/
+
+# Model weights
+*.pt
+*.onnx
+
+
+# --- Add other specific files to ignore ---
+# Example: If driving.mov is in the root
+driving.mov
