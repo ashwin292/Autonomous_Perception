@@ -2,7 +2,7 @@ from ultralytics import YOLO
 
 def main():
     # Load a pre-trained YOLOv8s model
-    model = YOLO('yolov8s.pt')
+    model = YOLO('best.pt')
 
     # Train the model on our BDD100K dataset
     results = model.train(
