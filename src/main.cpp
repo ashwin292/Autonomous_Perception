@@ -22,7 +22,6 @@ int main() {
         return -1;
     }
 
-    // --- FINAL: Load your custom-trained best.onnx model ---
     cv::dnn::Net net = cv::dnn::readNet("best.onnx");
 
     cv::Mat frame, blob;
@@ -40,9 +39,17 @@ int main() {
         std::vector<float> confidences;
         std::vector<cv::Rect> boxes;
 
-        float* data = (float*)outputs[0].data;
+        // --- START OF FIX, RANDOM GRID-LIKE BOXES ---
+        // The output shape from YOLOv8 is [1, 14, 8400], but sometimes the ONNX model
+        // has a transposed shape of [1, 8400, 14]. We need to handle this.
         const int dimensions = CLASS_NAMES.size() + 4;
-        const int rows = outputs[0].size[2];
+        cv::Mat mat(dimensions, outputs[0].size[2], CV_32F, (float*)outputs[0].data);
+        cv::Mat mat_t = mat.t(); // Transpose the matrix to get shape [8400, 14]
+
+        float* data = (float*)mat_t.data;
+        const int rows = mat_t.rows;
+        // --- END OF FIX ---
+
 
         for (int i = 0; i < rows; ++i) {
             float* classes_scores = data + 4;
@@ -72,20 +79,18 @@ int main() {
             int class_id = class_ids[idx];
             const std::string& class_name = CLASS_NAMES[class_id];
 
-            // --- FINAL: Decision Logic with BDD100K class names ---
             cv::Scalar color;
             
             if (class_name == "pedestrian" || class_name == "bicycle" || class_name == "motorcycle" || class_name == "rider") {
-                color = cv::Scalar(0, 0, 255); // Red for critical, high-risk objects
+                color = cv::Scalar(0, 0, 255);
                 std::cout << "CRITICAL: " << class_name << " detected! TRIGGER BRAKE." << std::endl;
             } else if (class_name == "traffic sign" || class_name == "traffic light") {
-                color = cv::Scalar(255, 255, 0); // Cyan for informational signs
+                color = cv::Scalar(255, 255, 0);
                 std::cout << "INFO: " << class_name << " detected." << std::endl;
             } else {
-                color = cv::Scalar(0, 255, 0); // Green for general objects like cars
+                color = cv::Scalar(0, 255, 0);
             }
 
-            // Draw bounding box and label
             cv::rectangle(frame, box, color, 2);
             std::string label = class_name + ": " + cv::format("%.2f", confidences[idx]);
             cv::putText(frame, label, cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, color, 2);
