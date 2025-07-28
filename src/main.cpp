@@ -82,13 +82,13 @@ int main() {
             cv::Scalar color;
             
             if (class_name == "pedestrian" || class_name == "bicycle" || class_name == "motorcycle" || class_name == "rider") {
-                color = cv::Scalar(0, 0, 255);
+                color = cv::Scalar(0, 0, 255); // Red for critical objects
                 std::cout << "CRITICAL: " << class_name << " detected! TRIGGER BRAKE." << std::endl;
             } else if (class_name == "traffic sign" || class_name == "traffic light") {
-                color = cv::Scalar(255, 255, 0);
+                color = cv::Scalar(255, 255, 0);  // Cyan for informational signs
                 std::cout << "INFO: " << class_name << " detected." << std::endl;
             } else {
-                color = cv::Scalar(0, 255, 0);
+                color = cv::Scalar(0, 255, 0);  // Green for general objects
             }
 
             cv::rectangle(frame, box, color, 2);
