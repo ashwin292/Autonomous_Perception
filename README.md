@@ -6,7 +6,7 @@ This project is a C++ application that performs real-time object detection on dr
 
 ## 🎥 Demo
 
-Below is a short demo of the system processing nighttime driving footage.
+System demo in various driving conditions.
 
 <table align="center">
   <tr>
