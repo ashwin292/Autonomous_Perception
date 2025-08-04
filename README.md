@@ -8,8 +8,6 @@ This project is a C++ application that performs real-time object detection on dr
 
 Below is a short demo of the system processing nighttime driving footage.
 
-## 🎥 Demo
-
 <table align="center">
   <tr>
     <td align="center">
@@ -29,7 +27,7 @@ Below is a short demo of the system processing nighttime driving footage.
   </tr>
 </table>
 
-**[Watch the Full-Quality Video on YouTube](https://www.youtube.com/watch?v=PZyQY9SmM7c&list=PLC8cnhLHv7nnzu-YifiSjzikhgsCITUx9)**
+<a href="https://www.youtube.com/watch?v=PZyQY9SmM7c&list=PLC8cnhLHv7nnzu-YifiSjzikhgsCITUx9" target="_blank"><strong>Watch the Full-Quality Video on YouTube</strong></a>
 
 ---
 

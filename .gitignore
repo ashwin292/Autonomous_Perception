@@ -43,4 +43,3 @@ __pycache__/
 # --- Add other specific files to ignore ---
 # Example: If driving.mov is in the root
 /temp/
-demo/
