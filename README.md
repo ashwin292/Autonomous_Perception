@@ -62,7 +62,7 @@ Below is a short demo of the system processing nighttime driving footage.
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/ashwin292/Autonomous_Perception.git]
+    git clone https://github.com/ashwin292/Autonomous_Perception.git
     cd autonomous_perception
     ```
 2.  **Build the project:**
