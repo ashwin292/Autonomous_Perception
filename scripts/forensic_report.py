@@ -3,66 +3,72 @@ import os
 from collections import defaultdict
 from tqdm import tqdm
 
-def run_forensic_analysis(label_dir):
-    """
-    Scans BDD100K JSON files to discover all unique object structures.
-    """
-    print(f"--- 🕵️‍♂️ Starting Forensic Analysis on: {label_dir} ---")
-    
-    # This set will store string representations of the keys for each unique object type
-    found_structures = defaultdict(int)
-    
-    json_files = [f for f in os.listdir(label_dir) if f.endswith('.json')]
-    
-    # We'll just scan the first 5000 files to get a representative sample quickly
-    sample_files = json_files[:5000]
-    
-    print(f"Analyzing a sample of {len(sample_files)} files...")
 
-    for json_file in tqdm(sample_files, desc="Analyzing JSON structures"):
+def run_forensic_analysis(label_dir: str) -> None:
+    """
+    Look through a folder of BDD100K-style JSON label files and report every
+    *different* object/label dictionary structure we encounter.
+
+    Why this matters
+    ----------------
+    In BDD100K (and many other datasets) not every annotation has the same set
+    of keys.  Some categories include extra fields; others omit common ones.
+    Before you write a parser, it helps to know exactly which permutations
+    of keys exist in the wild.  This little “forensic” pass gives you that
+    inventory.
+    """
+    print(f"Starting forensic pass in: {label_dir}")
+
+    # (category, key-tuple) → how many times we’ve seen it
+    found_structures = defaultdict(int)
+
+    # Limit ourselves to .json files only
+    json_files = [f for f in os.listdir(label_dir) if f.endswith(".json")]
+
+    # A quick scan of the first 5 000 files is usually plenty to get coverage
+    sample_files = json_files[:5000]
+    print(f"Scanning {len(sample_files)} file(s) for object structures…")
+
+    for json_file in tqdm(sample_files, desc="Parsing JSON"):
         json_path = os.path.join(label_dir, json_file)
-        with open(json_path) as f:
+
+        # Load a single JSON label file
+        with open(json_path, "r") as f:
             data = json.load(f)
 
-        if 'frames' in data:
-            for frame in data['frames']:
-                # Check for both 'objects' and 'labels' keys
-                object_list = frame.get('objects', frame.get('labels', []))
-                
-                for label_obj in object_list:
-                    # Get the category to see if it's one we are missing
-                    category = label_obj.get('category', 'N/A')
-                    
-                    # Create a sorted tuple of the keys in this object's dictionary
-                    # This gives us a unique signature for its structure
-                    structure_signature = tuple(sorted(label_obj.keys()))
-                    
-                    # We'll store the category along with the structure
+        # Each file is a list of video frames; every frame contains objects/labels
+        if "frames" in data:
+            for frame in data["frames"]:
+                # BDD100K sometimes uses the key 'objects', sometimes 'labels'
+                object_list = frame.get("objects", frame.get("labels", []))
+
+                for obj in object_list:
+                    # We’ll group by category so we know which structures belong to what
+                    category = obj.get("category", "N/A")
+
+                    # A sorted tuple of keys uniquely identifies the object’s schema
+                    structure_signature = tuple(sorted(obj.keys()))
+
                     found_structures[(category, structure_signature)] += 1
 
-    print("\n--- 🕵️‍♂️ Forensic Report ---")
-    print("Found the following unique object structures (Category, Keys):\n")
-    
+    # ---------- Report ---------- #
+    print("\nForensic Report")
     if not found_structures:
-        print("No objects or labels found in any of the sampled files.")
+        print("No objects or labels were found in the sampled files.")
         return
 
-    # Print out the findings in a readable format
-    for (category, structure), count in sorted(found_structures.items()):
-        print(f"Category: '{category}'")
-        print(f"  Keys: {structure}")
-        print(f"  Occurrences: {count}\n")
-        
-    print("--------------------------------------------------")
-    print("Please share this report. It will tell us the exact keys needed to parse all classes.")
+    print("Below are all unique (category, key-set) pairs and their frequencies:\n")
+    for (category, keys), count in sorted(found_structures.items()):
+        print(f"Category: {category!r}")
+        print(f"  Keys: {keys}")
+        print(f"  Seen: {count} time(s)\n")
 
+if __name__ == "__main__":
+    # Path to the *original* BDD100K JSON labels (NOT the YOLO-style .txt files)
+    source_label_dir = "./datasets/bdd100k/labels_json/100k/train"
 
-if __name__ == '__main__':
-    # IMPORTANT: This must point to your ORIGINAL BDD100K JSON labels, not the .txt files
-    source_label_dir = './datasets/bdd100k/labels_json/100k/train'
-    
     if not os.path.exists(source_label_dir):
-        print(f"ERROR: Source directory not found: {source_label_dir}")
-        print("Please make sure this script is pointing to the original BDD100K JSON files.")
+        print(f"ERROR: Cannot find directory: {source_label_dir}")
+        print("Double-check that the path points to the unmodified JSON labels.")
     else:
         run_forensic_analysis(source_label_dir)

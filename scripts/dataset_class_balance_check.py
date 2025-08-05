@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
 
-# --- 1. CONFIGURATION ---
-# This class map is the final, correct version based on our analysis
 CLASS_MAP = {
     0: 'person', 1: 'rider', 2: 'car', 3: 'truck',
     4: 'bus', 5: 'train', 6: 'motor', 7: 'bike',
@@ -16,7 +14,7 @@ def analyze_dataset_balance(label_dir, dataset_name):
     """
     Analyzes the class distribution of a dataset in YOLO format.
     """
-    print(f"\n🔍 Analyzing '{dataset_name}' in directory: {label_dir}")
+    print(f"\nAnalyzing '{dataset_name}' in directory: {label_dir}")
     
     if not os.path.exists(label_dir):
         print(f"Error: Directory not found -> {label_dir}")
@@ -40,20 +38,18 @@ def analyze_dataset_balance(label_dir, dataset_name):
                 except (ValueError, IndexError):
                     continue
 
-    print(f"✅ Analysis complete for '{dataset_name}'.")
+    print(f"Analysis complete for '{dataset_name}'.")
 
     if not class_counts:
         print("No objects were found in any label files.")
         return
 
-    # --- Create and display a results table ---
     df = pd.DataFrame(list(class_counts.items()), columns=['Class', 'Instance Count'])
     df = df.sort_values(by='Instance Count', ascending=False).reset_index(drop=True)
     
     print(f"\n--- {dataset_name} Class Distribution ---")
     print(df.to_string())
 
-    # --- Generate and save a bar chart ---
     plt.figure(figsize=(12, 8))
     bars = plt.bar(df['Class'], df['Instance Count'], color='green')
     plt.xlabel('Object Class', fontsize=12)
@@ -68,16 +64,14 @@ def analyze_dataset_balance(label_dir, dataset_name):
 
     chart_filename = f"{dataset_name.lower().replace(' ', '_')}_distribution.png"
     plt.savefig(chart_filename)
-    print(f"\n📊 A bar chart has been saved to '{chart_filename}'")
+    print(f"\nA bar chart has been saved to '{chart_filename}'")
     plt.close()
 
 
 if __name__ == '__main__':
-    # --- 2. SET THE PATHS TO YOUR BALANCED DATASETS ---
-    # IMPORTANT: Update these paths to point to your new balanced folders
+
     balanced_train_labels = './datasets/bdd100k_balanced/labels/train'
     balanced_val_labels = './datasets/bdd100k_balanced/labels/val'
 
-    # --- 3. RUN THE ANALYSIS ---
     analyze_dataset_balance(balanced_train_labels, "Balanced Training Set")
     analyze_dataset_balance(balanced_val_labels, "Balanced Validation Set")

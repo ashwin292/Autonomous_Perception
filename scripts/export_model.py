@@ -1,27 +1,32 @@
-import os
+"""
+This script converts a PyTorch-based YOLOv8 model (.pt) to the ONNX format.
+
+ONNX (Open Neural Network Exchange) is a standard format for machine learning
+models that allows them to be used across different frameworks and inference engines,
+like OpenCV's DNN module.
+
+The script is designed to be run from anywhere within the project by dynamically
+calculating the absolute paths to the model and output files.
+"""
+
+from pathlib import Paths
 from ultralytics import YOLO
 
 def main():
-    # --- START OF NEW, MORE ROBUST PATH LOGIC ---
+    # Use pathlib to dynamically construct absolute paths. This is the modern,
+    # preferred way to handle file paths in Python.
+    script_dir = Path(__file__).resolve().parent
+    project_root = script_dir.parent
+    input_model_path = project_root / "models" / "best.pt"
+    output_model_path = project_root / "models" / "best.onnx"
 
-    # Get the absolute path of the directory where this script is located (i.e., .../scripts/)
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    print(f"Loading model from: {input_model_path}")
 
-    # Get the path to the project's root directory (by going up one level from /scripts)
-    project_root = os.path.dirname(script_dir)
-
-    # Construct the full, absolute path to the model file
-    input_model_path = os.path.join(project_root, 'models', 'best.pt')
-    output_model_path = os.path.join(project_root, 'models', 'best.onnx')
-
-    # --- END OF NEW LOGIC ---
-
-    print(f"Attempting to load model from absolute path: {input_model_path}")
-
-    # Load your custom-trained model
+    # Load the YOLOv8 model from its PyTorch checkpoint.
     model = YOLO(input_model_path)
 
-    # Export the model to ONNX format
+    # Export the model to ONNX format for deployment.
+    # This creates a portable model for various inference engines.
     model.export(format='onnx')
 
     print(f"Model successfully exported to: {output_model_path}")

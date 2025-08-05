@@ -8,8 +8,7 @@ def convert_to_yolo(source_dir, output_dir):
     Converts BDD100K JSON files to YOLOv8 TXT format using the
     correct class names discovered from forensic analysis.
     """
-    # --- FINAL, CORRECTED CLASS MAP ---
-    # This now correctly uses 'person', 'motor', and 'bike'.
+
     class_map = {
         'person': 0, 'rider': 1, 'car': 2, 'truck': 3,
         'bus': 4, 'train': 5, 'motor': 6, 'bike': 7,
