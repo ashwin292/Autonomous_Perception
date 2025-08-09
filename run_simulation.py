@@ -1,10 +1,14 @@
-# run_simulation.py
-
 import sys
 import os
 import random
+import time
+import zmq
 
-# Add CARLA .egg to the Python path to enable the 'carla' import.
+# --- Create a directory for the sensor output ---
+# This ensures the folder exists before the script tries to save images.
+os.makedirs('_output', exist_ok=True)
+
+# --- Add CARLA .egg to the Python path ---
 try:
     script_dir = os.path.dirname(os.path.abspath(__file__))
     egg_path = os.path.join(script_dir, 'carla-0.9.14-py3.7-linux-x86_64.egg')
@@ -13,50 +17,81 @@ try:
         raise FileNotFoundError(f"Could not find carla .egg file at {egg_path}")
 
     sys.path.append(egg_path)
+    
+    # Import carla now that the path is set
+    import carla
 
-except IndexError:
-    pass
+except (IndexError, FileNotFoundError, ImportError) as e:
+    print(f"Error importing CARLA: {e}")
+    sys.exit()
 
-import carla
+from carla_actor_factory import CarlaActorFactory
 
-def main():
-    client = None
-    vehicle = None # Define vehicle here to ensure it's in scope for the finally block
+def camera_callback(image, socket):
+    """
+    This function is called every time the camera sensor gets a new image.
+    It sends the image data to the C++ server via ZMQ.
+    """
+
     try:
-        # NOTE: Ensure your firewall allows traffic to this IP on ports 2000-2001.
-        client = carla.Client('34.148.135.236', 2000)
-        client.set_timeout(10.0) 
+        metadata = dict(
+            height=image.height,
+            width=image.width,
+            channels=4,
+            frame=image.frame
+        )
 
-        print("Successfully connected to CARLA server.")
+        socket.send_json(metadata, flags=zmq.SNDMORE)
 
-        world = client.get_world()
-        print(f"Current map: {world.get_map().name}")
+        socket.send(image.raw_data)
 
-        blueprint_library = world.get_blueprint_library()
-        vehicle_bp = blueprint_library.find('vehicle.tesla.model3')
-        
-        spawn_points = world.get_map().get_spawn_points()
-        if not spawn_points:
-            print("No spawn points found in the map!")
-            return
-            
-        spawn_point = random.choice(spawn_points)
+        reply_message = socket.recv_string()
 
-        vehicle = world.spawn_actor(vehicle_bp, spawn_point)
-        print(f"Spawned {vehicle.type_id} at location {spawn_point.location}")
-        
-        # Pause script to observe the spawned vehicle in the simulator.
-        input("Press Enter to destroy the actor and exit...")
+        print(f"Received reply form C++: [{reply_message}] for frame {metadata['frame']}")
 
     except Exception as e:
-        print(f"An error occurred: {e}")
-    
+        print(f"Error in camers callback: {e}")
+
+def main():
+    actors_list = []
+    socket = None
+
+    try:
+        context = zmq.Context()
+        socket = context.socket(zmq.REQ)
+        socket.connect("tcp://host.docker.internal:5555")
+
+        client = carla.Client('34.148.135.236', 2000)
+        client.set_timeout(10.0)
+        world = client.get_world()
+
+        factory = CarlaActorFactory(world, world.get_blueprint_library())
+        spawn_point = random.choice(world.get_map().get_spawn_points())
+
+        vehicle = factory.create_vehicle('vehicle.tesla.model3', spawn_point)
+        actors_list.append(vehicle)
+        vehicle.set_autopilot(True)
+
+        camera = factory.create_camera(vehicle)
+        actors_list.append(camera)
+
+        camera.listen(lambda image: camera_callback(image, socket))
+
+        print("\n Simulation running. Streaming camera data to C++ server.")
+
+        while True:
+            time.sleep(1)
+
+    except Exception as e:
+        print(f"\nAn error occured in main: {e}")
+
     finally:
-        # Ensure the spawned vehicle is destroyed on exit.
-        if vehicle is not None:
+        if socket:
+            socket.close()
+        if actors_list:
             print("Destroying actors...")
-            vehicle.destroy()
-            print("Done.")
+            client.apply_batch([carla.command.DestroyActor(x) for x in actors_list])
+            print("Done")
 
 if __name__ == '__main__':
     main()
